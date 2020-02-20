@@ -1,64 +1,116 @@
+/*
+Ideas / Todo
+- split code into Party Leader and Non Leader version
+  - target Party Leader's target
+  - Party Leader dont attack if any party member hp low
+  - anchor movement to party leader position
+- make new script for auto attempting to upgrade items
+- don't use potions unless below certain threshold
+- use skills/mana
+- auto respawn
+- auto reconnect
+- resume farming
+- better movement restriction code.  allow x/y movement with caps, set anchor at runtime/engagetime
+*/
 
-
+/* *******Settings******** */
 var attack_mode=true
-
-//Min/Max stats required in order to target a monster.  (I turned this into a variable because it is now being used twice in my code)
 var monsterReqStats = {
 	min_xp:100,
-	max_att:220
+	max_att:100
 }
+var percentHpRequiredToAcquireNewTarget = .8;
+var maxWander = 200;
+/* ***************************  */
 
 setInterval(function(){
+  
+  if(character.rip){
+    return; 
+  }
 
-	use_hp_or_mp();
+	use_hp_or_mp(); 
+
 	loot();
 
-	if(!attack_mode || character.rip) return; // || is_moving(character)) return;
+  if(attack_mode && !is_moving(character)){ 
+    attackMode();
+  }
+  
+},1000/4);
 
-	var target=get_targeted_monster();
+function attackMode(){
+  //sets 'target' variable to whatever is already targetted
+  var target=get_targeted_monster(); 
+  
+  
+	if (!target){
+		target = getNewTarget();
+	}
 	
-	if(!target && character.hp >= 1500)
-	{
-		target=get_nearest_monster(monsterStats);
-		
-		if(target)
-		{
-			change_target(target);
-		}
-		else
-		{
+  if (!target){
 			set_message("No Monsters");
-			//move(
-			//	character.x - change_target('JCaesar').x/2,
-			//	character.y
-			//	);
 			return;
-		}
 	}
-	
-	if(!is_in_range(target))
-	{
-		if (target === get_nearest_monster(monsterStats))
-		{
-			move(
-				character.x +(target.x-character.x)/2,
-				character.y//+(target.y-character.y)/2
-				);
-			// move along y
-		}	
-		else 
-		{
-			target = get_nearest_monster(monsterStats);
-		}
+
+	if (!is_in_range(target))
+	{	
+     if (!targetCanBeReached && target.target !== character.name){
+       target = get_nearest_monster(monsterReqStats);
+     }
+     moveTowardsTarget(target);
+     
+    //if it's aggroing, move towards it
+    //if we can't reach it but it's still the closest, move towards it
+     
 	}
-	
-	if(can_attack(target))
+  
+	if (can_attack(target))
 	{
 		set_message("Attacking");
 		attack(target);
 	}
+}
 
-},1000/4); // Loops every 1/4 seconds.
+function targetCanBeReached(target){
+  var bool = false;
+  var maxX = maxXPosition + character.range;
+  var minX = minXPosition - character.range;
+  var maxY = maxYPosition + character.range;
+  var minY = minYPosition - character.range;
+  if (target.x <= maxX && target.x >= minX && target.y <= maxY && target.y >= minY){
+    bool = true;
+  }
+  return bool;
+}
+
+function getNewTarget(){
+  if (character.hp >= minHpRequiredToAcquireNewTarget){
+      return get_nearest_monster(monsterReqStats); 
+    } else {
+      set_message("Hold 4 HP");
+      return;
+    }
+		
+}
+
+function moveTowardsTarget(target){
+  var xDistanceToTarget = target.x - character.x;
+  var xMoveHere = Math.max(Math.min(character.x + xDistanceToTarget/2, maxXPosition), minXPosition)
+  var yDistanceToTarget = target.y - character.y;
+  var yMoveHere = Math.max(Math.min(character.y + yDistanceToTarget/2, maxYPosition), minYPosition)
+  move(xMoveHere, yMoveHere);
+}
+
+//**********  Other global helper vars (supposed to avoid globals oops) ***********//
+
+var minHpRequiredToAcquireNewTarget = percentHpRequiredToAcquireNewTarget * character.hp;
+//Set max wander box based on current position when initializing code (aka 'engage'). must remain outside of update/setInterval
+var maxXPosition = character.x + maxWander;
+var minXPosition = character.x - maxWander;
+var maxYPosition = character.y + maxWander;
+var minYPosition = character.y - maxWander;
+
 
 // Learn Javascript: https://www.codecademy.com/learn/learn-javascript
 // Write your own CODE: https://github.com/kaansoral/adventureland
