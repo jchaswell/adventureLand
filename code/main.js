@@ -1,4 +1,5 @@
- game_log('Engaged');
+game_log('Engaged');
+
 /* *******Settings******** */
 var attack_mode=true
 var monsterReqStats = {
