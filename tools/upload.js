@@ -19,7 +19,7 @@ function upload_file(file_path, save_slot, save_name) {
         method: 'post',
         body: querystring.stringify(body),
         headers: {
-            cookie: "auth=" + fs.readFileSync(".secret").toString(),
+            cookie: "auth=" + fs.readFileSync("SECRET").toString(),
             "Content-Type": "application/x-www-form-urlencoded"
         }
     }
