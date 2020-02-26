@@ -1,6 +1,7 @@
 const fetch = require("node-fetch");
 const fs = require("fs");
 const querystring = require("querystring");
+const secret = ${{ secrets.SECRET }};
 
 function upload_file(file_path, save_slot, save_name) {
     const code = fs.readFileSync(file_path);
@@ -19,7 +20,7 @@ function upload_file(file_path, save_slot, save_name) {
         method: 'post',
         body: querystring.stringify(body),
         headers: {
-            cookie: "auth=" + fs.readFileSync("SECRET").toString(),
+            cookie: "auth=" + secret,
             "Content-Type": "application/x-www-form-urlencoded"
         }
     }
